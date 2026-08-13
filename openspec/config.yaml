@@ -1,0 +1,8 @@
+context: |
+  local-dictation is an experimental, source-only macOS dictation app for Apple Silicon.
+  It records on demand, transcribes locally with mlx-whisper, and keeps dictated text on the clipboard.
+  Support baseline: macOS, Apple Silicon, Python 3.13. The first run downloads the configured model;
+  transcription is offline after that. Preserve privacy: no telemetry, cloud STT, or API keys.
+
+  For substantive work, read AGENTS.md, relevant current specs, active change material, code, and tests.
+  Keep current specs, implementation, tests, README, configuration, and permission/privacy guidance aligned.

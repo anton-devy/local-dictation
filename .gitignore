@@ -1,0 +1,12 @@
+.venv/
+__pycache__/
+*.pyc
+.DS_Store
+*.wav
+!fixtures/*.wav
+local-dictation.log*
+.env
+.env.*
+!.env.example
+.claude/worktrees/
+dist/

@@ -1,0 +1,111 @@
+## Purpose
+
+The macOS menu-bar shell that hosts the status icon, wires the global hotkey to the
+dictation pipeline, and surfaces recording state, status, and completion feedback to the
+user.
+
+## Requirements
+
+### Requirement: Menu-bar presence
+The system SHALL run as a macOS menu-bar app with a status icon, providing a persistent,
+low-footprint presence while active.
+
+#### Scenario: App launched
+- **WHEN** the app is started
+- **THEN** a status icon appears in the macOS menu bar and remains visible while the app
+  runs
+
+### Requirement: Visual recording state indicator
+The system SHALL visually change the status icon while audio is being recorded, and
+revert it to the idle appearance once recording stops.
+
+#### Scenario: Icon changes when recording starts via toggle
+- **WHEN** the user toggles the trigger and recording starts
+- **THEN** the menu-bar icon changes to a distinct "recording" appearance
+
+#### Scenario: Icon reverts after recording
+- **WHEN** the user toggles the trigger again and the recorded clip has been handed off for
+  transcription
+- **THEN** the menu-bar icon shows the transcribing appearance until no queued transcription
+  remains
+
+### Requirement: Completion feedback
+The system SHALL notify the user of a dictation's outcome, using a real system
+notification only for infrequent, actionable exceptions rather than every completion (see
+"Brief completion flash on the status icon" below for the common/successful case).
+
+#### Scenario: Focus changed before paste
+- **WHEN** the frontmost application changed between recording stopping and the
+  transcription being ready to paste
+- **THEN** the system shows a notification explaining that the paste was skipped and the
+  text is on the clipboard
+
+#### Scenario: Paste permission problem
+- **WHEN** a paste attempt fails due to a missing permission
+- **THEN** the system shows a notification explaining that a permission is needed, and
+  that the text is on the clipboard
+
+### Requirement: Brief completion flash on the status icon
+The system SHALL briefly flash a distinct glyph on the menu-bar icon to indicate a
+dictation's outcome — a success indicator when a clip is accepted (whether or not
+auto-paste itself landed), and a distinct no-speech indicator when a clip is rejected as
+containing no speech — before reverting to the idle appearance after a short delay. Real
+notifications are reserved for the infrequent, actionable exceptions covered by
+"Completion feedback" above.
+
+#### Scenario: Successful dictation flashes success
+- **WHEN** a dictation completes and is accepted
+- **THEN** the menu-bar icon briefly shows a success glyph, then reverts to idle, without a
+  system notification
+
+#### Scenario: No-speech clip flashes distinctly
+- **WHEN** a dictation is rejected for containing no speech
+- **THEN** the menu-bar icon briefly shows a distinct no-speech glyph, then reverts to
+  idle, without a system notification
+
+### Requirement: Status line in menu
+The system SHALL surface a live status line in the menu-bar app's menu reflecting the
+Input Monitoring permission state (checkable ahead of time via the trigger's event tap)
+and the outcome of the most recent paste attempt (there is no reliable way to check paste
+[Automation/Accessibility] permission ahead of time on macOS, so the status reflects what
+actually happened on the last real attempt rather than a prediction).
+
+#### Scenario: Input Monitoring not granted
+- **WHEN** Input Monitoring is not granted or has been revoked
+- **THEN** the status line reports that the trigger is off pending that permission
+
+#### Scenario: Last paste attempt failed
+- **WHEN** the most recent dictation's paste attempt did not succeed (skipped due to focus
+  change, or failed due to a permission or other error)
+- **THEN** the status line reports that outcome
+
+#### Scenario: Everything working
+- **WHEN** Input Monitoring is granted and the most recent paste attempt succeeded (or no
+  attempt has been made yet)
+- **THEN** the status line reflects a working/ready state
+
+### Requirement: App quit control
+The system SHALL provide a menu item that quits the application.
+
+#### Scenario: User quits from menu
+- **WHEN** the user clicks the status icon and selects the quit menu item
+- **THEN** the app terminates and the status icon is removed from the menu bar
+
+### Requirement: Visual transcription and failure state
+The system SHALL show a distinct menu-bar state while one or more recordings are transcribing and
+another distinct state when a recoverable transcription failure is awaiting user action.
+
+#### Scenario: Recording handed off for transcription
+- **WHEN** recording stops and a clip is queued or being transcribed
+- **THEN** the status icon shows the transcribing state until no queued transcription remains
+
+#### Scenario: Recoverable failure is retained
+- **WHEN** transcription still fails after its automatic retry
+- **THEN** the status icon and status line identify the failure and available recovery action
+
+### Requirement: Descriptive process identity
+The menu-bar app SHALL identify itself as `local-dictation` in macOS process monitoring.
+
+#### Scenario: App is running
+- **WHEN** the menu-bar app is launched
+- **THEN** Activity Monitor shows its process name as `local-dictation`

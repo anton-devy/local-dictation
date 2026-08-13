@@ -1,0 +1,43 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "local-dictation"
+version = "0.1.0"
+description = "Fully local, on-device macOS speech-to-text dictation app with global hotkey"
+readme = "README.md"
+requires-python = ">=3.13,<3.14"
+license = {text = "MIT"}
+dependencies = [
+    "mlx-whisper",
+    "sounddevice",
+    "rumps",
+    "pyperclip",
+    "pyobjc-framework-Quartz",
+    "pyobjc-framework-Cocoa",
+    "setproctitle",
+]
+
+[project.optional-dependencies]
+dev = ["pytest", "numpy", "python-semantic-release", "build", "ruff"]
+
+[project.scripts]
+local-dictation = "local_dictation.app:main"
+local-dictation-dictate = "local_dictation.cli:main"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+markers = ["integration: slow tests requiring real model/audio fixtures"]
+
+[tool.semantic_release]
+tag_format = "v{version}"
+version_toml = ["pyproject.toml:project.version"]
+build_command = "python -m build"
+
+[tool.ruff]
+target-version = "py313"
+line-length = 100
+
+[tool.ruff.lint]
+ignore = ["B009", "BLE001", "F401", "F841", "I001", "PLR0402", "PLW1510", "RUF059", "RUF100", "SIM103", "UP037"]
