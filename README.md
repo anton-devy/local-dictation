@@ -46,6 +46,11 @@ Audio and transcription are processed locally. The only expected outbound networ
 model download from Hugging Face. The app does not include telemetry, accounts, or API keys. Dictated
 text remains on the system clipboard after use. Diagnostic logs are stored in
 `~/Library/Logs/local-dictation/` (or `LOCAL_DICTATION_LOG_DIR`) and must not contain dictated text.
+The same diagnostics also print to the terminal (stderr) while the app runs, so startup and model
+loading are visible instead of appearing to hang — this includes a record when the model starts
+loading (naming it and whether it's already cached or being downloaded) and one when it's ready.
+Set `LOCAL_DICTATION_LOG_LEVEL` (e.g. `DEBUG`) to change verbosity on both the file and the
+console; it defaults to `INFO`.
 
 ## Releases
 
