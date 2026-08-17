@@ -2,6 +2,7 @@
 
 import logging
 import os
+import sys
 import threading
 from pathlib import Path
 
@@ -14,14 +15,18 @@ os.environ.setdefault("HF_HUB_DISABLE_PROGRESS_BARS", "1")
 
 # Store diagnostics outside the installed package and never log dictation/clipboard text.
 # Set LOCAL_DICTATION_LOG_DIR for an explicit location; otherwise use the conventional
-# per-user macOS log directory.
+# per-user macOS log directory. Set LOCAL_DICTATION_LOG_LEVEL (e.g. "DEBUG") to change
+# verbosity on both the file and the console; an unrecognized value falls back to INFO
+# rather than raising before the app has even started.
 LOG_DIR = Path(os.environ.get("LOCAL_DICTATION_LOG_DIR", "~/Library/Logs/local-dictation")).expanduser()
 LOG_DIR.mkdir(parents=True, exist_ok=True)
 LOG_FILE = LOG_DIR / "local-dictation.log"
+LOG_LEVEL = getattr(logging, os.environ.get("LOCAL_DICTATION_LOG_LEVEL", "INFO").upper(), logging.INFO)
 logging.basicConfig(
-    filename=LOG_FILE,
-    level=logging.INFO,
+    handlers=[logging.FileHandler(LOG_FILE), logging.StreamHandler(sys.stderr)],
+    level=LOG_LEVEL,
     format="%(asctime)s %(levelname)s %(name)s: %(message)s",
+    force=True,
 )
 # Quiet down third-party libraries (httpx/huggingface_hub make INFO-level HTTP request
 # logs that would otherwise bury the diagnostics this file exists for) without affecting

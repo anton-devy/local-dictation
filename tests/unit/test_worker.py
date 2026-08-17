@@ -1,6 +1,8 @@
 """Tests for TranscriptionWorker with idle-unload lifecycle."""
 
+import logging
 import unittest.mock as mock
+from pathlib import Path
 
 import numpy as np
 import pytest
@@ -86,6 +88,67 @@ def test_warm_up_idempotent():
         # Should only have been called once
         assert call_count_1 == 1
         assert call_count_2 == 1
+
+
+def test_warm_up_logs_model_name_and_cached_status(caplog):
+    """warm_up() should log the model name and cached status before loading."""
+    w = TranscriptionWorker()
+    with mock.patch('local_dictation.worker.transcribe_full'), \
+         mock.patch('local_dictation.worker._model_is_cached', return_value=True), \
+         caplog.at_level(logging.INFO, logger='local_dictation.worker'):
+        w.warm_up()
+
+    assert any('cached' in r.message and 'not cached' not in r.message for r in caplog.records)
+
+
+def test_warm_up_logs_downloading_when_not_cached(caplog):
+    """warm_up() should say the model is downloading, not cached, when absent from the cache."""
+    w = TranscriptionWorker()
+    with mock.patch('local_dictation.worker.transcribe_full'), \
+         mock.patch('local_dictation.worker._model_is_cached', return_value=False), \
+         caplog.at_level(logging.INFO, logger='local_dictation.worker'):
+        w.warm_up()
+
+    assert any('downloading' in r.message for r in caplog.records)
+
+
+def test_warm_up_logs_elapsed_time_on_completion(caplog):
+    """warm_up() should log an elapsed-time record once loading finishes."""
+    w = TranscriptionWorker()
+    with mock.patch('local_dictation.worker.transcribe_full'), \
+         mock.patch('local_dictation.worker._model_is_cached', return_value=True), \
+         caplog.at_level(logging.INFO, logger='local_dictation.worker'):
+        w.warm_up()
+
+    assert any('model ready' in r.message for r in caplog.records)
+
+
+def test_warm_up_log_records_carry_no_filesystem_path(caplog):
+    """New warm_up() log records must not include a filesystem path (AGENTS.md safety boundary).
+
+    The model repo id itself legitimately contains a "/" (org/repo) -- that's not a path.
+    What must never appear is an actual filesystem location: the home directory, an
+    absolute path, or a "~"-relative path.
+    """
+    w = TranscriptionWorker()
+    with mock.patch('local_dictation.worker.transcribe_full'), \
+         mock.patch('local_dictation.worker._model_is_cached', return_value=True), \
+         caplog.at_level(logging.INFO, logger='local_dictation.worker'):
+        w.warm_up()
+
+    home = str(Path.home())
+    for record in caplog.records:
+        assert home not in record.message
+        assert '~' not in record.message
+        assert not record.message.startswith('/')
+
+
+def test_model_is_cached_survives_scan_cache_dir_failure():
+    """A broken/unavailable cache scan should degrade to an unknown status, not raise."""
+    from local_dictation.worker import _model_is_cached
+
+    with mock.patch('huggingface_hub.scan_cache_dir', side_effect=RuntimeError('boom')):
+        assert _model_is_cached() is None
 
 
 def test_process_pending_with_empty_queue():

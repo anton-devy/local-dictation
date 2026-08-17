@@ -280,6 +280,7 @@ class DictationApp(rumps.App):
 
         self.worker.warm_up()
         self.trigger.start()
+        log.info("trigger armed (%s)", config.TRIGGER)
 
         # Hide from Dock, keep menu-bar only (accessory activation policy)
         NSApplication.sharedApplication().setActivationPolicy_(NSApplicationActivationPolicyAccessory)

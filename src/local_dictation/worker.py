@@ -16,9 +16,11 @@ submission order, without ever touching MLX from more than one thread.
 
 import logging
 import queue
+import time
 
 import numpy as np
 
+from local_dictation import config
 from local_dictation.core import filters
 from local_dictation.adapters import paste
 from local_dictation.core.transcriber import transcribe_full, unload_model
@@ -26,6 +28,20 @@ from local_dictation.core.transcriber import transcribe_full, unload_model
 WARM_UP_SECONDS = 0.5
 SAMPLE_RATE = 16_000
 log = logging.getLogger(__name__)
+
+
+def _model_is_cached() -> bool | None:
+    """Best-effort check for whether config.MODEL is already in the local HF cache.
+
+    Never raises: an unreliable answer just means the log line omits the cached/downloading
+    claim (see design.md's cache-status-detection risk).
+    """
+    try:
+        from huggingface_hub import scan_cache_dir
+
+        return any(repo.repo_id == config.MODEL for repo in scan_cache_dir().repos)
+    except Exception:
+        return None
 
 
 class TranscriptionWorker:
@@ -47,9 +63,14 @@ class TranscriptionWorker:
         """Load the model and run one dummy inference. Call once, from the processing thread."""
         if self._warmed_up:
             return
+        cached = _model_is_cached()
+        status = "cached" if cached else "not cached, downloading" if cached is False else "status unknown"
+        log.info("loading model %s (%s)", config.MODEL, status)
+        started = time.monotonic()
         dummy = np.zeros(int(WARM_UP_SECONDS * SAMPLE_RATE), dtype=np.float32)
         transcribe_full(dummy)
         self._warmed_up = True
+        log.info("model ready in %.1fs", time.monotonic() - started)
 
     def unload(self) -> None:
         """Unload the model from memory to reduce idle footprint."""
