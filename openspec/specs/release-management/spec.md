@@ -2,8 +2,9 @@
 
 ## Purpose
 
-Provides a repeatable local release process that derives semantic versions from Conventional
-Commits while keeping publication and CI under explicit user control.
+Provides a repeatable, automated release process that derives semantic versions from Conventional
+Commits on every qualifying merge to the protected `main` branch, while keeping publication scope
+(source-only, no PyPI, no app bundle) under explicit maintainer control.
 
 ## Requirements
 
