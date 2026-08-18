@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "local-dictation"
-version = "1.0.0"
+version = "0.0.0"
 description = "Fully local, on-device macOS speech-to-text dictation app with global hotkey"
 readme = "README.md"
 requires-python = ">=3.13,<3.14"
@@ -34,6 +34,7 @@ markers = ["integration: slow tests requiring real model/audio fixtures"]
 tag_format = "v{version}"
 version_toml = ["pyproject.toml:project.version"]
 build_command = "python -m build"
+allow_zero_version = true
 
 [tool.ruff]
 target-version = "py313"
