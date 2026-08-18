@@ -22,3 +22,4 @@ jobs:
           github_token: ${{ secrets.RELEASE_PAT }}
           git_committer_name: "github-actions"
           git_committer_email: "actions@users.noreply.github.com"
+          build: false
