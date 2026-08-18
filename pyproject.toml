@@ -33,7 +33,11 @@ markers = ["integration: slow tests requiring real model/audio fixtures"]
 [tool.semantic_release]
 tag_format = "v{version}"
 version_toml = ["pyproject.toml:project.version"]
-build_command = "python -m build"
+build_command = """
+    pip install uv
+    uv lock --upgrade-package "$PACKAGE_NAME"
+    git add uv.lock
+"""
 allow_zero_version = true
 
 [tool.ruff]
