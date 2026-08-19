@@ -7,6 +7,7 @@ carries a stable, ad-hoc-signed bundle identity, so macOS tools that read proces
 (Activity Monitor, TCC) see `local-dictation` instead of the underlying Python interpreter.
 """
 
+import tempfile
 import tomllib
 from pathlib import Path
 
@@ -34,6 +35,10 @@ OPTIONS = {
 setup(
     app=APP,
     name="local-dictation",
+    # Keep setuptools from auto-merging pyproject.toml's [project] table (hatchling-owned, lists
+    # runtime deps as install_requires) -- py2app alias mode refuses to run if install_requires is
+    # set, since alias mode installs nothing, it only references the active environment.
+    src_root=tempfile.mkdtemp(),
     options={"py2app": OPTIONS},
     setup_requires=["py2app"],
 )
