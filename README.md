@@ -1,7 +1,8 @@
 # local-dictation
 
-> **Research preview.** Source-only and experimental; no app bundle, notarization, PyPI package, or
-> support SLA. Supported baseline: macOS on Apple Silicon with Python 3.13.
+> **Research preview.** Source-only and experimental; no notarization, PyPI package, or support SLA.
+> A local, ad-hoc-signed `.app` build is available (see Install) — nothing is distributed or
+> published. Supported baseline: macOS on Apple Silicon with Python 3.13.
 
 A fully local, on-device macOS speech-to-text dictation app. Press **Control+Shift+D** (default,
 configurable) to start listening, speak, press it again to stop — the transcription (auto-detected
@@ -31,12 +32,24 @@ after that is offline.
 loading). Integration tests use audio fixtures in `fixtures/`; regenerate them with
 `./fixtures/generate.sh` if missing.
 
+**App bundle (recommended for actually running the app):** `./scripts/build_app.sh` builds
+`dist/local-dictation.app` — an ad-hoc-signed, local-only bundle referencing this environment (no
+vendoring, nothing published). Unlike the bare console script, it gives macOS a process identity
+that doesn't drift from unrelated system changes, so Activity Monitor and permission grants say
+`local-dictation` instead of `Python`, and grants survive a `brew upgrade python@3.13`. They do
+**not** survive rebuilding the bundle itself — see Permissions below. Requires the `bundle` extra:
+`uv sync --extra bundle --locked`.
+
 ## Usage
 
-- **Menu-bar app (recommended):** run `local-dictation` or `python -m local_dictation.app`. Press
-  the trigger combo to start recording (icon turns 🔴; mic is only active while recording), press
-  it again to stop — the clip is transcribed and, if a text field is focused, pasted automatically.
-  A notification shows the detected language and a preview. While transcribing, the icon shows an
+- **App bundle (recommended):** `open dist/local-dictation.app` after building it (see Install).
+  Behaves identically to the console script below; the only difference is process identity.
+- **Menu-bar app, development:** run `local-dictation` or `python -m local_dictation.app` directly
+  from the venv. Convenient while iterating, but the process appears as the underlying Python
+  interpreter to Activity Monitor and TCC — use the app bundle for everyday use. Press the trigger
+  combo to start recording (icon turns 🔴; mic is only active while recording), press it again to
+  stop — the clip is transcribed and, if a text field is focused, pasted automatically. A
+  notification shows the detected language and a preview. While transcribing, the icon shows an
   hourglass; if processing fails twice, the recording is retained and the menu offers **Retry
   Failed Dictation** or **Discard Failed Dictation**. **Copy Last Dictation** recovers the most
   recent transcription at any time. A live **Status** line shows Input Monitoring state and the
@@ -59,11 +72,24 @@ Three permissions are needed:
   clipboard and the HUD still shows it — or set `AUTO_PASTE = False` in `config.py` to disable
   paste attempts entirely.
 
-If Automation keeps regressing after being granted, it's usually a macOS code-identity issue: a
-venv interpreter's identity can shift (e.g. after `brew upgrade python@3.13`), silently breaking a
-grant that used to work. Run `tccutil reset Automation`, fully quit and relaunch (not just
-re-toggle the checkbox), and confirm which binary needs the grant with
-`python3 -c "import sys, os; print(os.path.realpath(sys.executable))"`.
+If a permission keeps regressing after being granted, it's a macOS code-identity issue: whatever's
+running has no stable signed identity, so macOS periodically treats it as a new, ungranted process.
+This affects both run paths, for different reasons:
+
+- **Console script:** the venv interpreter's identity can shift (e.g. after `brew upgrade
+  python@3.13`), unpredictably breaking a grant that used to work. Confirm which binary needs the
+  grant with `python3 -c "import sys, os; print(os.path.realpath(sys.executable))"`.
+- **App bundle:** ad-hoc signing (no Apple certificate) derives identity from a hash of the binary
+  itself, so **every rebuild of the bundle invalidates its Input Monitoring and Automation grants**,
+  even with no source changes. This is predictable (only a rebuild triggers it, not an unrelated
+  system update) but not eliminated. After rebuilding, reset and re-grant:
+  `tccutil reset ListenEvent com.devant0n.local-dictation && tccutil reset AppleEvents
+  com.devant0n.local-dictation`, then fully quit and relaunch the bundle (not just re-toggling the
+  checkbox — toggling alone does not re-bind the grant to the new binary).
+
+**Switching from the console script to the app bundle:** the two have separate identities and
+therefore separate grants. The first time you run `dist/local-dictation.app`, expect to re-grant all
+three permissions even if you'd already granted them to the console script/interpreter.
 
 ## Configuration
 

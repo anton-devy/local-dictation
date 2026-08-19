@@ -21,6 +21,7 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = ["pytest", "numpy", "python-semantic-release", "build", "ruff"]
+bundle = ["py2app"]
 
 [project.scripts]
 local-dictation = "local_dictation.app:main"
