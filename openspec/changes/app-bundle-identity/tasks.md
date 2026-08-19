@@ -27,9 +27,12 @@
 
 ## 4. Validation
 
-- [ ] 4.1 `openspec validate --all --strict`, `ruff check .`, `pytest tests/unit -q`, `uv build` all
+- [x] 4.1 `openspec validate --all --strict`, `ruff check .`, `pytest tests/unit -q`, `uv build` all
       pass.
-- [ ] 4.2 `./scripts/build_app.sh` produces `dist/local-dictation.app`; `ps -Ao ucomm` on the running
-      bundle reports `local-dictation`.
-- [ ] 4.3 Human confirms once: Input Monitoring + Automation grants against the new bundle identity,
-      a real hotkey → transcribe → paste round-trip, and that the grant survives one rebuild+re-sign.
+- [x] 4.2 `./scripts/build_app.sh` produces `dist/local-dictation.app`; `ps -Ao ucomm` on the running
+      bundle reports `local-dictation`. Also confirmed `menu-bar-only-activation` still holds
+      (System Events: `backgroundOnly=true, visible=false`).
+- [ ] 4.3 **Blocked on a human.** Input Monitoring + Automation grants against the new bundle
+      identity, a real hotkey → transcribe → paste round-trip, and confirming the grant survives one
+      rebuild+re-sign — none of this is automatable; a system TCC prompt requires a person to click
+      "Allow" and physically press the key combo.
