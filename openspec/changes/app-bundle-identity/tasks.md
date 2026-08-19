@@ -32,7 +32,8 @@
 - [x] 4.2 `./scripts/build_app.sh` produces `dist/local-dictation.app`; `ps -Ao ucomm` on the running
       bundle reports `local-dictation`. Also confirmed `menu-bar-only-activation` still holds
       (System Events: `backgroundOnly=true, visible=false`).
-- [ ] 4.3 **Blocked on a human.** Input Monitoring + Automation grants against the new bundle
-      identity, a real hotkey → transcribe → paste round-trip, and confirming the grant survives one
-      rebuild+re-sign — none of this is automatable; a system TCC prompt requires a person to click
-      "Allow" and physically press the key combo.
+- [x] 4.3 Human-confirmed: Input Monitoring and Automation granted against the bundle identity, a
+      real hotkey → transcribe → paste round-trip succeeded. Grant did **not** survive a rebuild
+      (confirmed twice) — a documented limitation (README, spec), not a defect; see commit
+      documenting it. Also surfaced and fixed an unrelated real bug along the way (#20:
+      `UnicodeDecodeError` crash masking a permission failure).
