@@ -34,9 +34,10 @@ loading). Integration tests use audio fixtures in `fixtures/`; regenerate them w
 
 **App bundle (recommended for actually running the app):** `./scripts/build_app.sh` builds
 `dist/local-dictation.app` — an ad-hoc-signed, local-only bundle referencing this environment (no
-vendoring, nothing published). Unlike the bare console script, it gives macOS a stable process
-identity, so Activity Monitor and permission grants say `local-dictation` instead of `Python`, and
-grants survive a `brew upgrade python@3.13`. Requires the `bundle` extra:
+vendoring, nothing published). Unlike the bare console script, it gives macOS a process identity
+that doesn't drift from unrelated system changes, so Activity Monitor and permission grants say
+`local-dictation` instead of `Python`, and grants survive a `brew upgrade python@3.13`. They do
+**not** survive rebuilding the bundle itself — see Permissions below. Requires the `bundle` extra:
 `uv sync --extra bundle --locked`.
 
 ## Usage
@@ -71,12 +72,20 @@ Three permissions are needed:
   clipboard and the HUD still shows it — or set `AUTO_PASTE = False` in `config.py` to disable
   paste attempts entirely.
 
-If Automation keeps regressing after being granted, it's usually a macOS code-identity issue: a
-venv interpreter's identity can shift (e.g. after `brew upgrade python@3.13`), silently breaking a
-grant that used to work. Run `tccutil reset Automation`, fully quit and relaunch (not just
-re-toggle the checkbox), and confirm which binary needs the grant with
-`python3 -c "import sys, os; print(os.path.realpath(sys.executable))"`. Using the app bundle instead
-of the bare console script avoids this recurring, since its identity is stable across `brew upgrade`.
+If a permission keeps regressing after being granted, it's a macOS code-identity issue: whatever's
+running has no stable signed identity, so macOS periodically treats it as a new, ungranted process.
+This affects both run paths, for different reasons:
+
+- **Console script:** the venv interpreter's identity can shift (e.g. after `brew upgrade
+  python@3.13`), unpredictably breaking a grant that used to work. Confirm which binary needs the
+  grant with `python3 -c "import sys, os; print(os.path.realpath(sys.executable))"`.
+- **App bundle:** ad-hoc signing (no Apple certificate) derives identity from a hash of the binary
+  itself, so **every rebuild of the bundle invalidates its Input Monitoring and Automation grants**,
+  even with no source changes. This is predictable (only a rebuild triggers it, not an unrelated
+  system update) but not eliminated. After rebuilding, reset and re-grant:
+  `tccutil reset ListenEvent com.devant0n.local-dictation && tccutil reset AppleEvents
+  com.devant0n.local-dictation`, then fully quit and relaunch the bundle (not just re-toggling the
+  checkbox — toggling alone does not re-bind the grant to the new binary).
 
 **Switching from the console script to the app bundle:** the two have separate identities and
 therefore separate grants. The first time you run `dist/local-dictation.app`, expect to re-grant all

@@ -18,6 +18,15 @@ fixed, stable bundle identifier.
 - **THEN** it references the existing Python environment in alias mode rather than freezing or
   vendoring the interpreter, mlx/Metal libraries, or other dependencies
 
+#### Scenario: Rebuilding invalidates TCC grants (documented limitation)
+
+- **WHEN** the bundle is rebuilt, including with no source changes
+- **THEN** ad-hoc signing (no Apple-issued certificate) derives the bundle's code identity from a
+  hash of its contents, so the rebuilt binary is a distinct, ungranted identity to macOS even though
+  its `CFBundleIdentifier` string is unchanged — any previously granted Input Monitoring or
+  Automation permission stops working until reset (`tccutil reset`) and re-granted; this is verified
+  behavior, documented in the README, not a defect to silently discover
+
 ## MODIFIED Requirements
 
 ### Requirement: Descriptive process identity
