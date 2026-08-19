@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "local-dictation"
-version = "0.1.1"
+version = "0.1.2"
 description = "Fully local, on-device macOS speech-to-text dictation app with global hotkey"
 readme = "README.md"
 requires-python = ">=3.13,<3.14"
