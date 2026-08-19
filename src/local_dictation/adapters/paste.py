@@ -97,10 +97,18 @@ def _synthesize_cmd_v_osascript() -> tuple[bool, str]:
     tell us whether it actually happened, including distinguishing a permission problem
     (catchable, actionable) from other failures."""
     try:
+        # encoding/errors pinned explicitly: without them, text=True decodes via
+        # locale.getpreferredencoding(), which is plain ASCII when this process has no
+        # inherited shell locale (e.g. launched as a GUI .app rather than from a
+        # terminal) -- a localized (non-English) permission-denial message from
+        # osascript would then raise UnicodeDecodeError here, before it ever reaches
+        # the classification below.
         result = subprocess.run(
             ["osascript", "-e", _PASTE_SCRIPT],
             capture_output=True,
             text=True,
+            encoding="utf-8",
+            errors="replace",
             timeout=10,
         )
     except (subprocess.TimeoutExpired, FileNotFoundError, OSError) as exc:
