@@ -3,9 +3,7 @@
 The macOS menu-bar shell that hosts the status icon, wires the global hotkey to the
 dictation pipeline, and surfaces recording state, status, and completion feedback to the
 user.
-
 ## Requirements
-
 ### Requirement: Menu-bar presence
 The system SHALL run as a macOS menu-bar app with a status icon, providing a persistent,
 low-footprint presence while active.
@@ -104,8 +102,15 @@ another distinct state when a recoverable transcription failure is awaiting user
 - **THEN** the status icon and status line identify the failure and available recovery action
 
 ### Requirement: Descriptive process identity
-The menu-bar app SHALL identify itself as `local-dictation` in macOS process monitoring.
+The menu-bar app SHALL identify itself as `local-dictation` to process-level tooling such as `ps`.
 
 #### Scenario: App is running
 - **WHEN** the menu-bar app is launched
-- **THEN** Activity Monitor shows its process name as `local-dictation`
+- **THEN** `ps` reports its process name (`comm`) as `local-dictation`
+
+#### Scenario: Kernel-level process name may still differ
+- **WHEN** the app is run from a source checkout without an `.app` bundle
+- **THEN** macOS tools that read the exec'd binary's identity rather than argv (e.g. Activity
+  Monitor's Process Name column) MAY still show the underlying interpreter rather than
+  `local-dictation` — this is a known limitation of the unbundled distribution, not a defect
+
